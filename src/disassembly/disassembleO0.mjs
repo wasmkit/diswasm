@@ -320,13 +320,13 @@ export class O0Dis extends Disassembler {
                 return instr.name;
             }
             case 'local.set': {
-                // set by generateLocalDecleratio
-                if (instr.diff) return `*s(&${instr.local.name} + ${instr.diff}) = ` + this.disassembleInstruction(instr.value);
+                // set by generateLocalDecleration
+                if (instr.diff) return `*(&${instr.local.name} + ${instr.diff}) = ` + this.disassembleInstruction(instr.value);
                 return instr.local.name + " = " + this.disassembleInstruction(instr.value);
             }
             case 'local.get': {
-                // set by generateLocalDecleratio
-                if (instr.diff) return `*s(&${instr.local.name} + ${instr.diff})`
+                // set by generateLocalDecleration
+                if (instr.diff) return `*(&${instr.local.name} + ${instr.diff})`
                 return instr.local.name
             }
             case 'param.get': {
@@ -344,6 +344,9 @@ export class O0Dis extends Disassembler {
             }
             case 'const': {
                 return instr.type.startsWith('f') ? instr.value.toString().includes('.') ? instr.value.toString() : instr.value.toString() + ".0" : ((instr.value >= 0 ? "0x" : "-0x") + Math.abs(instr.value).toString(16));
+            }
+            case "select": {
+                return `${this.disassembleInstruction(instr.condition)} ? ${this.disassembleInstruction(instr.isTrue)} : ${this.disassembleInstruction(instr.isFalse)}`
             }
             case 'binary': {
                 k: if (instr.op === binaryen.AddInt32 || instr.op === binaryen.AddInt64) {
