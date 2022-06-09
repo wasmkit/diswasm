@@ -1,0 +1,12 @@
+{
+  "name": "diswasm",
+  "bin": {
+      "diswasm": "cli.mjs"
+  },
+  "author": "awt-256",
+  "license": "MIT",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "binaryen": "^108.0.0"
+  }
+}
