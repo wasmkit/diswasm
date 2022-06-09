@@ -3,7 +3,7 @@ Disassembler for wasm binaries. At the moment this is more of a proof of code, a
 
 ## Installing
 
-After downloading run `npm i -g .`
+After downloading run `npm i -g diswasm`
 
 ## Usage
 
