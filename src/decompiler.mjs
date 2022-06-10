@@ -7,7 +7,7 @@ import { O2Dis } from "./disassembly/disassembleO2.mjs";
 const ODisassemblers = {
     [-1]: iDis,
     [0]: O0Dis,
-    [1]: O2Dis,
+    [1]: O1Dis,
     [2]: O2Dis
 };
 
