@@ -7,7 +7,7 @@ import { O2Dis } from "./disassembly/disassembleO2.mjs";
 const ODisassemblers = {
     [-1]: iDis,
     [0]: O0Dis,
-    [1]: O1Dis,
+    [1]: O2Dis,
     [2]: O2Dis
 };
 
@@ -38,8 +38,7 @@ export class Decompiler {
             let offset = 0;
             if (seg.offset.id === 'const') offset = seg.offset.value
             else {
-                console.log('help', seg);
-                process.exit(-1)
+                this.outputText += `// Function table (unknown offset ${seg.offset.name})\n(*__function_table[${seg.data.length}])() = {\n  ${Array(0).fill("NULL,").concat(Array.from(seg.data).map(e => e.name + ", // $func" + e.index + " " + this.wmod.functions[e.index].result + " (" + this.wmod.functions[e.index].params.join(', ') + ")")).join('\n  ')}\n};`
             }
             this.outputText += `// Function table\n(*__function_table[${seg.data.length + offset}])() = {\n  ${Array(offset).fill("NULL,").concat(Array.from(seg.data).map(e => e.name + ", // $func" + e.index + " " + this.wmod.functions[e.index].result + " (" + this.wmod.functions[e.index].params.join(', ') + ")")).join('\n  ')}\n};`
         }

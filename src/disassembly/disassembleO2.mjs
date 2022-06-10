@@ -30,7 +30,7 @@ export class O2Dis extends Disassembler {
                 return instr.target.name + "(" + instr.operands.map(e => this.disassembleInstruction(e)).join(', ') + ")";
             }
             case 'call_indirect': {
-                return "__function_table[" + this.disassembleInstruction(instr.target.name) + "](" + instr.operands.map(e => this.disassembleInstruction(e)).join(', ') + ")"
+                return "__function_table[" + this.disassembleInstruction(instr.target) + "](" + instr.operands.map(e => this.disassembleInstruction(e)).join(', ') + ")"
             }
             case 'const': {
                 if (typeof instr.value === 'bigint') return ((instr.value >= 0n ? "0x" : "-0x") + (instr.value >= 0n ? 1n : -1n) * instr.value).toString(16);
@@ -63,6 +63,9 @@ export class O2Dis extends Disassembler {
             }
             case 'memory.size': {
                 return "__get_memory_size()"
+            }
+            case 'memory.grow': {
+                return "__grow_memory_size(" + this.disassembleInstruction(instr.delta) + ")"
             }
             case 'drop': {
                 return this.disassembleInstruction(instr.value);
