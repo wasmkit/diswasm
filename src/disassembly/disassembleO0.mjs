@@ -266,8 +266,8 @@ export class O0Dis extends Disassembler {
                     id: "if",
                     type: instr.type,
                     condition: this.processInstruction(instr.condition),
-                    isTrue: this.processInstruction(instr.isTrue),
-                    isFalse: this.processInstruction(instr.isFalse),
+                    ifTrue: this.processInstruction(instr.ifTrue),
+                    ifFalse: this.processInstruction(instr.ifFalse),
                 }
             }
             case "loop": {
@@ -343,10 +343,11 @@ export class O0Dis extends Disassembler {
                 return "__function_table[" + this.disassembleInstruction(instr.target.name) + "](" + instr.operands.map(e => this.disassembleInstruction(e)).join(', ') + ")"
             }
             case 'const': {
+                if (typeof instr.value === 'bigint') return ((instr.value >= 0n ? "0x" : "-0x") + (instr.value >= 0n ? 1n : -1n) * instr.value).toString(16);
                 return instr.type.startsWith('f') ? instr.value.toString().includes('.') ? instr.value.toString() : instr.value.toString() + ".0" : ((instr.value >= 0 ? "0x" : "-0x") + Math.abs(instr.value).toString(16));
             }
             case "select": {
-                return `${this.disassembleInstruction(instr.condition)} ? ${this.disassembleInstruction(instr.isTrue)} : ${this.disassembleInstruction(instr.isFalse)}`
+                return `${this.disassembleInstruction(instr.condition)} ? ${this.disassembleInstruction(instr.ifTrue)} : ${this.disassembleInstruction(instr.ifFalse)}`
             }
             case 'binary': {
                 k: if (instr.op === binaryen.AddInt32 || instr.op === binaryen.AddInt64) {
@@ -396,7 +397,7 @@ export class O0Dis extends Disassembler {
             }
             case "block": {
                 this.controlFlow.set(instr.name, isLoop);
-                let out = instr.name + ": {"
+                let out = (instr.name || "unnamed$label") + ": {"
                 for (const i of instr.children) {
                     const instr = this.disassembleInstruction(i);
                     if (!instr) continue;
@@ -407,13 +408,13 @@ export class O0Dis extends Disassembler {
                 return out;
             }
             case "if": {
-                let out = "if (" + this.disassembleInstruction(instr.condition) + ") {\n" + this.indentate(this.disassembleInstruction(this.isTrue)) + ";\n}" 
-                if (instr.isFalse) out += " else {\n" + this.indentate(this.disassembleInstruction(this.isFalse)) + ";\n}"
+                let out = "if (" + this.disassembleInstruction(instr.condition) + ") {\n" + this.indentate(this.disassembleInstruction(instr.ifTrue)) + ";\n}" 
+                if (instr.ifFalse) out += " else {\n" + this.indentate(this.disassembleInstruction(instr.ifFalse)) + ";\n}"
 
                 return out;
             }
             case "loop": {
-                return "while (1) " + this.indentate(this.disassembleInstruction(instr.body), true);
+                return "while (1) " + this.disassembleInstruction(instr.body, true)
             }
             case "br": {
                 const isLoop = this.controlFlow.get(instr.name);

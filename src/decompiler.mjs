@@ -41,7 +41,7 @@ export class Decompiler {
                 console.log('help', seg);
                 process.exit(-1)
             }
-            this.outputText += `// Function table\n(*__function_table[${seg.data.length + offset}])() = {\n  ${Array(offset).fill("NULL,").concat(Array.from(seg.data).map(e => e.name + ", // $func" + e.index + "")).join('\n  ')}\n};`
+            this.outputText += `// Function table\n(*__function_table[${seg.data.length + offset}])() = {\n  ${Array(offset).fill("NULL,").concat(Array.from(seg.data).map(e => e.name + ", // $func" + e.index + " " + this.wmod.functions[e.index].result + " (" + this.wmod.functions[e.index].params.join(', ') + ")")).join('\n  ')}\n};`
         }
 
         if (this.wmod.dataSegments.length) {

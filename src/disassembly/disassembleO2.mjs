@@ -33,6 +33,7 @@ export class O2Dis extends Disassembler {
                 return "__function_table[" + this.disassembleInstruction(instr.target.name) + "](" + instr.operands.map(e => this.disassembleInstruction(e)).join(', ') + ")"
             }
             case 'const': {
+                if (typeof instr.value === 'bigint') return ((instr.value >= 0n ? "0x" : "-0x") + (instr.value >= 0n ? 1n : -1n) * instr.value).toString(16);
                 return instr.type.startsWith('f') ? instr.value.toString().includes('.') ? instr.value.toString() : instr.value.toString() + ".0" : ((instr.value >= 0 ? "0x" : "-0x") + Math.abs(instr.value).toString(16));
             }
             case 'binary': {
@@ -68,7 +69,7 @@ export class O2Dis extends Disassembler {
             }
             case "block": {
                 this.controlFlow.set(instr.name, isLoop);
-                let out = instr.name + ": {"
+                let out = (instr.name || "unnamed$label") + ": {"
                 for (const i of instr.children) {
                     const instr = this.disassembleInstruction(i);
                     if (!instr) continue;
@@ -79,13 +80,13 @@ export class O2Dis extends Disassembler {
                 return out;
             }
             case "if": {
-                let out = "if (" + this.disassembleInstruction(instr.condition) + ") {\n" + this.indentate(this.disassembleInstruction(this.isTrue)) + ";\n}" 
-                if (instr.isFalse) out += " else {\n" + this.indentate(this.disassembleInstruction(this.isFalse)) + ";\n}"
+                let out = "if (" + this.disassembleInstruction(instr.condition) + ") {\n" + this.indentate(this.disassembleInstruction(instr.ifTrue)) + ";\n}" 
+                if (instr.ifFalse) out += " else {\n" + this.indentate(this.disassembleInstruction(instr.ifFalse)) + ";\n}"
 
                 return out;
             }
             case "loop": {
-                return "while (1) " + this.indentate(this.disassembleInstruction(instr.body), true);
+                return "while (1) " + this.disassembleInstruction(instr.body, true)
             }
             case "br": {
                 const isLoop = this.controlFlow.get(instr.name);
@@ -105,7 +106,7 @@ export class O2Dis extends Disassembler {
                 return out;
             }
             case "select": {
-                return `${this.disassembleInstruction(instr.condition)} ? ${this.disassembleInstruction(instr.isTrue)} : ${this.disassembleInstruction(instr.isFalse)}`
+                return `${this.disassembleInstruction(instr.condition)} ? ${this.disassembleInstruction(instr.ifTrue)} : ${this.disassembleInstruction(instr.ifFalse)}`
             }
             default:
                 console.log("Invalid id " + instr.id)
@@ -118,18 +119,30 @@ export class O2Dis extends Disassembler {
         this.indent += 1
         let s = out.length;
         out += this.indentate(this.generateLocalDeclaration()) + "\n";
+        if (s === out.length - 1) out = out.slice(0, s - 1)
         out += "\n"
-        if (this.wfunc.body.id !== 'block') out += this.wfunc.body.type !== 'void' ? "return " + this.disassembleInstruction(this.wfunc.body) : this.disassembleInstruction(this.wfunc.body);
+        if (this.wfunc.body.id !== 'block') out += this.indentate(this.wfunc.body.type !== 'void' ? "return " + this.disassembleInstruction(this.wfunc.body) : this.disassembleInstruction(this.wfunc.body)) + ";\n"
         else {
+            let len = this.wfunc.body.children.length;
+            let end = -1;
+            if (this.wfunc.body.type !== 'void') for (let i = len; i > 0; --i) {
+                if (this.wfunc.body.children[i - 1].type !== 'void'){
+                    end = i;
+                    break;
+                }
+            }
+            let k = 0;
             for (const i of this.wfunc.body.children) {
+                k++
                 if (!i) continue;
-                const instr = this.disassembleInstruction(i);
+                let instr = this.disassembleInstruction(i);
                 if (!instr) continue;
-                out += this.indentate(instr) + ";" + "\n"
+                if (k === end && this.wfunc.body.type !== 'void') instr = 'return ' + instr;
+                out += this.indentate(instr) + ";\n"
             }
         }
         this.indent -= 1;
-        if (s === out.length) out = out.slice(0, s - 1)
+        if (s >= out.length-2) out = out.slice(0, s - 1)
         out += "}\n"
 
         return this.generateHeaderText() + out;
