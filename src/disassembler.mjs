@@ -9,6 +9,10 @@ class Disassembler {
     static genLocalName(index) {
         return "local" + index
     }
+    static numToString(num, type) {
+        if (typeof num === 'bigint') return ((num >= 0n ? "0x" : "-0x") + (num >= 0n ? 1n : -1n) * num).toString(16);
+        return type.startsWith('f') ? num.toString().includes('.') ? num.toString() : num.toString() + ".0" : ((num >= 0 ? "0x" : "-0x") + Math.abs(num).toString(16));
+    }
     static typeToText(type) {
         switch (type) {
             case "i32": return "int";
@@ -66,8 +70,9 @@ class Disassembler {
         
     // Returns the function header text
     generateHeaderText() {
-        let out = `// O[${this.constructor.O_LEVEL}] Decompilation of $func${this.wfunc.name.index}, known as ${this.wfunc.name.name}\n`
+        let out = `// O[${this.constructor.O_LEVEL}] ${this.constructor.O_LEVEL === 2 ? "Disassembly" : "Decompilation"} of $func${this.wfunc.name.index}, known as ${this.wfunc.name.name}\n`
         const result = Disassembler.typeToText(this.returnType);
+        if (typeof this.wfunc.exportKey === "string") out += "export " + JSON.stringify(this.wfunc.exportKey) + `; // $func${this.wfunc.name.index} is exported to ${JSON.stringify(this.wfunc.exportKey)}\n`
         out += result + " " + this.wfunc.name.name + "(" + this.params.map((t,i) => t.type + " " + t.name).join(', ') + ") "
 
         return out;

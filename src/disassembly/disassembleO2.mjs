@@ -33,8 +33,7 @@ export class O2Dis extends Disassembler {
                 return "__function_table[" + this.disassembleInstruction(instr.target) + "](" + instr.operands.map(e => this.disassembleInstruction(e)).join(', ') + ")"
             }
             case 'const': {
-                if (typeof instr.value === 'bigint') return ((instr.value >= 0n ? "0x" : "-0x") + (instr.value >= 0n ? 1n : -1n) * instr.value).toString(16);
-                return instr.type.startsWith('f') ? instr.value.toString().includes('.') ? instr.value.toString() : instr.value.toString() + ".0" : ((instr.value >= 0 ? "0x" : "-0x") + Math.abs(instr.value).toString(16));
+                return Disassembler.numToString(instr.value, instr.type)
             }
             case 'binary': {
                 const left = this.disassembleInstruction(instr.left);
@@ -55,11 +54,11 @@ export class O2Dis extends Disassembler {
             }
             case "load": {
                 let ptr = this.disassembleInstruction(instr.ptr);
-                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.type) + " *) " + ptr + " + " + instr.offset + ")";
+                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.type) + " *) " + ptr + " + " + Disassembler.numToString(instr.offset, instr.ptr.type) + ")";
             }
             case "store": {
                 let ptr = this.disassembleInstruction(instr.ptr);
-                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.value.type) + " *) " + ptr + " + " + instr.offset + ") = " + this.disassembleInstruction(instr.value);
+                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.value.type) + " *) " + ptr + " + " + Disassembler.numToString(instr.offset, instr.ptr.type) + ") = " + this.disassembleInstruction(instr.value);
             }
             case 'memory.size': {
                 return "__get_memory_size()"
