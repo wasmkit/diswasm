@@ -394,7 +394,7 @@ export class O0Dis extends Disassembler {
             }
             case "store": {
                 let ptr = typeof instr.ptr === "string" ? instr.ptr : this.disassembleInstruction(instr.ptr);
-                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.type) + " *) " + ptr + " + " + instr.offset + ") = " + this.disassembleInstruction(instr.value);
+                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.value.type) + " *) " + ptr + " + " + instr.offset + ") = " + this.disassembleInstruction(instr.value);
             }
             case 'memory.size': {
                 return "__get_memory_size()"
