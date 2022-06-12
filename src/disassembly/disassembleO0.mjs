@@ -350,8 +350,18 @@ export class O0Dis extends Disassembler {
                 return "__function_table[" + this.disassembleInstruction(instr.target) + "](" + instr.operands.map(e => this.disassembleInstruction(e)).join(', ') + ")"
             }
             case 'const': {
-                if (typeof instr.value === 'bigint') return ((instr.value >= 0n ? "0x" : "-0x") + (instr.value >= 0n ? 1n : -1n) * instr.value).toString(16);
-                return instr.type.startsWith('f') ? instr.value.toString().includes('.') ? instr.value.toString() : instr.value.toString() + ".0" : ((instr.value >= 0 ? "0x" : "-0x") + Math.abs(instr.value).toString(16));
+                let addition = "";
+                if (!Number(instr.value).toString().includes('.')) {
+                    let addr = Number(instr.value);
+                    if (addr >= this.wdis.mem.min && addr < this.wdis.mem.max) {
+                        addr -= this.wdis.mem.min
+                        const str = this.wdis.mem.mem.slice(addr, this.wdis.mem.mem.indexOf(0, addr));
+                        if (str.length >= 2 && str.every(e => (e >= 0x20 && e < 0x7f) || e === 0x0a || e === 0x09 || e === 0x0d)) {
+                            addition = " /* " + JSON.stringify(String.fromCharCode(...str)) + " */ ";
+                        }
+                    }
+                }
+                return Disassembler.numToString(instr.value, instr.type) + addition
             }
             case "select": {
                 return `${this.disassembleInstruction(instr.condition)} ? ${this.disassembleInstruction(instr.ifTrue)} : ${this.disassembleInstruction(instr.ifFalse)}`
@@ -390,11 +400,15 @@ export class O0Dis extends Disassembler {
             }
             case "load": {
                 let ptr = typeof instr.ptr === "string" ? instr.ptr : this.disassembleInstruction(instr.ptr);
-                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.type) + " *) " + ptr + " + " + instr.offset + ")";
+                let offset = Disassembler.numToString(instr.offset, "i");
+                let load = (ptr === "0x0" ? offset : (offset === "0x0" ? ptr : (ptr + " + " + offset)))
+                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.type) + " *) " + load + ")";
             }
             case "store": {
                 let ptr = typeof instr.ptr === "string" ? instr.ptr : this.disassembleInstruction(instr.ptr);
-                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.value.type) + " *) " + ptr + " + " + instr.offset + ") = " + this.disassembleInstruction(instr.value);
+                let offset = Disassembler.numToString(instr.offset, "i");
+                let load = (ptr === "0x0" ? offset : (offset === "0x0" ? ptr : (ptr + " + " + offset)))
+                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.value.type) + " *) " + load + ") = " + this.disassembleInstruction(instr.value);
             }
             case 'memory.size': {
                 return "__get_memory_size()"
@@ -407,7 +421,7 @@ export class O0Dis extends Disassembler {
             }
             case "block": {
                 this.controlFlow.set(instr.name, isLoop);
-                let out = (instr.name || "unnamed$label") + ": {"
+                let out = (instr.name ? (instr.name + ": ") : "") + "{"
                 for (const i of instr.children) {
                     const instr = this.disassembleInstruction(i);
                     if (!instr) continue;

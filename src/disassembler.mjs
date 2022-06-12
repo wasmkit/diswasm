@@ -13,7 +13,15 @@ class Disassembler {
         if (typeof num === 'bigint') return ((num >= 0n ? "0x" : "-0x") + (num >= 0n ? 1n : -1n) * num).toString(16);
         return type.startsWith('f') ? num.toString().includes('.') ? num.toString() : num.toString() + ".0" : ((num >= 0 ? "0x" : "-0x") + Math.abs(num).toString(16));
     }
-    static typeToText(type) {
+    static typeToText(type,size=null) {
+        if ((type === "i32" || type === "i64") && size !== null) {
+            switch (size) {
+                case 1: return "char";
+                case 2: return "short";
+                case 4: return "int";
+                case 8: return "long";
+            }
+        }
         switch (type) {
             case "i32": return "int";
             case "i64": return "long";

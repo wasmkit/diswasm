@@ -15,11 +15,30 @@ export class Decompiler {
     constructor(wmod) {
         this.wmod = wmod;
         this.outputText = "";
+        this.mem = {min:0,max:0,mem:new Uint8Array(0)}
     }
 
     async decompile() {
         const backend = await getStat(this.wmod, "backend");
         if (backend !== "llvm32" && backend !== "llvm64") throw new Error("Unsupported backend");
+
+        let memDump = ""
+
+        if (this.wmod.dataSegments.length) {
+            const min = this.wmod.dataSegments.reduce((a,b) => a < b.offset ? a : b.offset, Infinity)
+            const max = this.wmod.dataSegments.reduce((a,b) => a > b.offset+b.data.length ? a : b.offset + b.data.length, 0)
+            const mem = new Uint8Array(max - min)
+            for (const dataSeg of this.wmod.dataSegments) {
+                mem.set(dataSeg.data, dataSeg.offset - min);
+            }
+            this.mem = {mem, min, max};
+
+            memDump += "\n/****INITIALIZED MEMORY DUMP****/\n"
+            for (let i = 0; i < mem.length; i += 16) {
+                memDump += "// " + (i + min).toString(16).padStart(8, "0") + ": " + Array.from(mem.slice(i, i + 16)).map(e => e.toString(16).padStart(2, "0")).join(' ') + " : " + JSON.stringify(new TextDecoder().decode(mem.slice(i, i + 16))).replace(/\\u00[a-f0-9][a-f0-9]/gi, (c) => "\\x" + c.slice(4)) + "\n"
+            }
+        }
+
         const funcBodies = [];
         for (const func of this.wmod.functions) {
             const pressure = await getStat(this.wmod, "funcPressure", func);
@@ -42,20 +61,7 @@ export class Decompiler {
             }
             this.outputText += `// Function table\n(*__function_table[${seg.data.length + offset}])() = {\n  ${Array(offset).fill("NULL,").concat(Array.from(seg.data).map(e => e.name + ", // $func" + e.index + " " + this.wmod.functions[e.index].result + " (" + this.wmod.functions[e.index].params.join(', ') + ")")).join('\n  ')}\n};`
         }
-
-        if (this.wmod.dataSegments.length) {
-            const min = this.wmod.dataSegments.reduce((a,b) => a < b.offset ? a : b.offset, Infinity)
-            const max = this.wmod.dataSegments.reduce((a,b) => a > b.offset+b.data.length ? a : b.offset + b.data.length, 0)
-            const mem = new Uint8Array(max - min)
-            for (const dataSeg of this.wmod.dataSegments) {
-                mem.set(dataSeg.data, dataSeg.offset - min);
-            }
-
-            this.outputText += "\n/****INITIALIZED MEMORY DUMP****/\n"
-            for (let i = 0; i < mem.length; i += 16) {
-                this.outputText += "// " + (i + min).toString(16).padStart(8, "0") + ": " + Array.from(mem.slice(i, i + 16)).map(e => e.toString(16).padStart(2, "0")).join(' ') + " : " + JSON.stringify(new TextDecoder().decode(mem.slice(i, i + 16))).replace(/\\u00[a-f0-9][a-f0-9]/gi, (c) => "\\x" + c.slice(4)) + "\n"
-            }
-        }
+        this.outputText += memDump;
 
         return this.outputText;
     }
