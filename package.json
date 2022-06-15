@@ -1,7 +1,7 @@
 {
   "name": "diswasm",
   "description": "PoC Command line decompiler for wasm",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "bin": {
       "diswasm": "cli.mjs"
   },

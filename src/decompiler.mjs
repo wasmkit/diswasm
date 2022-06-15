@@ -18,7 +18,7 @@ export class Decompiler {
         this.mem = {min:0,max:0,mem:new Uint8Array(0)}
     }
 
-    async decompile() {
+    async decompile(gadgets) {
         const backend = await getStat(this.wmod, "backend");
         if (backend !== "llvm32" && backend !== "llvm64") throw new Error("Unsupported backend");
 
@@ -41,6 +41,7 @@ export class Decompiler {
 
         const funcBodies = [];
         for (const func of this.wmod.functions) {
+            if (gadgets && !this.wmod.elementSegments.find(seg => seg.data.find(n => n.index === func.name.index))) continue;
             const pressure = await getStat(this.wmod, "funcPressure", func);
             
             funcBodies.push(new ODisassemblers[pressure.t](this, func, pressure.d).disassemble());
