@@ -402,13 +402,13 @@ export class O0Dis extends Disassembler {
                 let ptr = typeof instr.ptr === "string" ? instr.ptr : this.disassembleInstruction(instr.ptr);
                 let offset = Disassembler.numToString(instr.offset, "i");
                 let load = (ptr === "0x0" ? offset : (offset === "0x0" ? ptr : (ptr + " + " + offset)))
-                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.type) + " *) " + load + ")";
+                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.type,  instr.bytes) + " *) " + load + ")";
             }
             case "store": {
                 let ptr = typeof instr.ptr === "string" ? instr.ptr : this.disassembleInstruction(instr.ptr);
                 let offset = Disassembler.numToString(instr.offset, "i");
                 let load = (ptr === "0x0" ? offset : (offset === "0x0" ? ptr : (ptr + " + " + offset)))
-                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.value.type) + " *) " + load + ") = " + this.disassembleInstruction(instr.value);
+                return "*((" + (instr.isSigned ? "" : "unsigned ") + Disassembler.typeToText(instr.value.type, instr.bytes) + " *) " + load + ") = " + this.disassembleInstruction(instr.value);
             }
             case 'memory.size': {
                 return "__get_memory_size()"
