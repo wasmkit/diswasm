@@ -1,6 +1,8 @@
 # diswasm
 Disassembler for wasm binaries. At the moment this is more of a proof of code, a more established codebase and library will be published later on after completion of this project.
 
+> # NOTICE: This package will be migrated over to a new format very soon. Prepare yourself for the next level of wasm analysis.
+
 The way this program works is it determines the minimization level (called `funcPressure` in the code) of every single function in the wasm file. The minimization level is a category of 4 types of functions:  
   1. `O(-1)` Imported functions
     - These functions have no content/bodies
