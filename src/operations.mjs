@@ -80,7 +80,7 @@ export default {
     ["binary" + binaryen.DivUInt32]: "((unsigned) $ / #)",
     ["binary" + binaryen.RemSInt64]: "($ % #)",
     ["binary" + binaryen.RemSInt32]: "($ % #)",
-    ["binary" + binaryen.RemUInt32]: "((unsigned) $ / #)",
+    ["binary" + binaryen.RemUInt32]: "((unsigned) $ % #)",
     ["binary" + binaryen.AndInt64]: "($ & #)",
     ["binary" + binaryen.AndInt32]: "($ & #)",
     ["binary" + binaryen.OrInt64]:"($ | #)",
