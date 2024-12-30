@@ -10,7 +10,7 @@ class Disassembler {
         return "local" + index
     }
     static numToString(num, type) {
-        if (typeof num === 'bigint') return ((num >= 0n ? "0x" : "-0x") + (num >= 0n ? 1n : -1n) * num).toString(16);
+        if (typeof num === 'bigint') return (num >= 0n ? "0x" : "-0x") + ((num >= 0n ? 1n : -1n) * num).toString(16);
         return type.startsWith('f') ? num.toString().includes('.') ? num.toString() : num.toString() + ".0" : ((num >= 0 ? "0x" : "-0x") + Math.abs(num).toString(16));
     }
     static typeToText(type,size=null) {
